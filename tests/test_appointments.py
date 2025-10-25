@@ -11,7 +11,7 @@ from app.main import (
 from app.models import User
 
 
-class TestAppointments:
+class TestCreatingAppointments:
 
     def test_create_an_appointment(self):
         controller = AppointmentController()
@@ -40,6 +40,9 @@ class TestAppointments:
         controller.create_appointment(at, patient, therapist)
         with pytest.raises(OverlappingAppointmentError):
             controller.create_appointment(at, patient, therapist)
+
+
+class TestGetAppointments:
 
     def test_appointments_are_saved(self):
         controller = AppointmentController()
@@ -81,3 +84,23 @@ class TestAppointments:
             )
         assert controller.get_all_appointments() == controller.appointments
         assert controller.get_all_appointments() == appointments
+
+    def test_get_appointments_filter_by_patient_id(self):
+        controller = AppointmentController()
+        patient_1 = User(id=uuid4(), firstname="Jane", lastname="Doe")
+        patient_2 = User(id=uuid4(), firstname="Jasmin", lastname="Doe")
+        therapist_1 = User(id=uuid4(), firstname="Stuart", lastname="Dolittle")
+        therapist_2 = User(id=uuid4(), firstname="John", lastname="Dolittle")
+        at = datetime.now() + timedelta(days=1)
+        for i in range(3):
+            controller.create_appointment(
+                at + timedelta(hours=i), patient_1, therapist_1
+            )
+            controller.create_appointment(
+                at + timedelta(hours=i), patient_2, therapist_2
+            )
+
+        appointments = controller.get_all_appointments(patient_id=patient_1.id)
+        assert len(appointments) == 3
+        for an_appointment in appointments:
+            assert an_appointment.patient_id == patient_1.id
