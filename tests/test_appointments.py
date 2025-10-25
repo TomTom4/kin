@@ -85,7 +85,7 @@ class TestGetAppointments:
         assert controller.get_all_appointments() == controller.appointments
         assert controller.get_all_appointments() == appointments
 
-    def test_get_appointments_filter_by_patient_id(self):
+    def test_get_appointments_filtered_by_patient_id(self):
         controller = AppointmentController()
         patient_1 = User(id=uuid4(), firstname="Jane", lastname="Doe")
         patient_2 = User(id=uuid4(), firstname="Jasmin", lastname="Doe")
@@ -104,3 +104,23 @@ class TestGetAppointments:
         assert len(appointments) == 3
         for an_appointment in appointments:
             assert an_appointment.patient_id == patient_1.id
+
+    def test_get_appointments_filtered_by_therapist_id(self):
+        controller = AppointmentController()
+        patient_1 = User(id=uuid4(), firstname="Jane", lastname="Doe")
+        patient_2 = User(id=uuid4(), firstname="Jasmin", lastname="Doe")
+        therapist_1 = User(id=uuid4(), firstname="Stuart", lastname="Dolittle")
+        therapist_2 = User(id=uuid4(), firstname="John", lastname="Dolittle")
+        at = datetime.now() + timedelta(days=1)
+        for i in range(3):
+            controller.create_appointment(
+                at + timedelta(hours=i), patient_1, therapist_1
+            )
+            controller.create_appointment(
+                at + timedelta(hours=i), patient_2, therapist_2
+            )
+
+        appointments = controller.get_all_appointments(therapist_id=therapist_1.id)
+        assert len(appointments) == 3
+        for an_appointment in appointments:
+            assert an_appointment.therapist_id == therapist_1.id

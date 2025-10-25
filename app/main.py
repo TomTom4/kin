@@ -63,7 +63,11 @@ class AppointmentController:
         self.appointments.append(appointment)
         return appointment
 
-    def get_all_appointments(self, patient_id=None):
+    def get_all_appointments(self, patient_id=None, therapist_id=None):
+        if therapist_id:
+            return list(
+                filter(lambda x: x.therapist_id == therapist_id, self.appointments)
+            )
         if patient_id:
             return list(filter(lambda x: x.patient_id == patient_id, self.appointments))
         return self.appointments
