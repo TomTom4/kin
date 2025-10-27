@@ -124,3 +124,46 @@ class TestGetAppointments:
         assert len(appointments) == 3
         for an_appointment in appointments:
             assert an_appointment.therapist_id == therapist_1.id
+
+    def test_get_appointments_filtered_by_date(self):
+        controller = AppointmentController()
+        patient_1 = User(id=uuid4(), firstname="Jane", lastname="Doe")
+        patient_2 = User(id=uuid4(), firstname="Jasmin", lastname="Doe")
+        therapist_1 = User(id=uuid4(), firstname="Stuart", lastname="Dolittle")
+        therapist_2 = User(id=uuid4(), firstname="John", lastname="Dolittle")
+        at = datetime.now() + timedelta(days=1)
+        controller.create_appointment(at, patient_1, therapist_1)
+        controller.create_appointment(at, patient_2, therapist_2)
+        for i in range(3):
+            controller.create_appointment(
+                at + timedelta(days=i + 1), patient_2, therapist_2
+            )
+        appointments = controller.get_all_appointments(day=at.date())
+        assert len(appointments) == 2
+        for an_appointment in appointments:
+            assert an_appointment.start_at.date() == at.date()
+
+    def test_get_all_appointments_filtered_by_multiple_filters(self):
+        controller = AppointmentController()
+        patient_1 = User(id=uuid4(), firstname="Jane", lastname="Doe")
+        patient_2 = User(id=uuid4(), firstname="Jasmin", lastname="Doe")
+        therapist_1 = User(id=uuid4(), firstname="Stuart", lastname="Dolittle")
+        therapist_2 = User(id=uuid4(), firstname="John", lastname="Dolittle")
+        at = datetime.now() + timedelta(days=1)
+        controller.create_appointment(at, patient_1, therapist_2)
+        controller.create_appointment(at, patient_2, therapist_1)
+        for i in range(3):
+            controller.create_appointment(
+                at + timedelta(days=i + 1), patient_2, therapist_2
+            )
+        appointments = controller.get_all_appointments(
+            patient_id=patient_1.id, therapist_id=therapist_1.id
+        )
+        assert len(appointments) == 0
+
+        appointments = controller.get_all_appointments(
+            patient_id=patient_1.id, day=at.date()
+        )
+        assert len(appointments) == 1
+        assert appointments[0].therapist_id == therapist_2.id
+        assert appointments[0].patient_id == patient_1.id

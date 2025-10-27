@@ -1,5 +1,5 @@
-from datetime import datetime, timedelta
-from uuid import uuid4
+from datetime import date, datetime, timedelta
+from uuid import UUID, uuid4
 
 from fastapi import FastAPI
 
@@ -63,14 +63,28 @@ class AppointmentController:
         self.appointments.append(appointment)
         return appointment
 
-    def get_all_appointments(self, patient_id=None, therapist_id=None):
+    def get_all_appointments(
+        self,
+        patient_id: UUID | None = None,
+        therapist_id: UUID | None = None,
+        day: date | None = None,
+    ):
+        appointments = self.appointments
         if therapist_id:
-            return list(
-                filter(lambda x: x.therapist_id == therapist_id, self.appointments)
+            appointments = list(
+                filter(lambda x: x.therapist_id == therapist_id, appointments)
             )
+
         if patient_id:
-            return list(filter(lambda x: x.patient_id == patient_id, self.appointments))
-        return self.appointments
+            appointments = list(
+                filter(lambda x: x.patient_id == patient_id, appointments)
+            )
+        if day:
+            appointments = list(
+                filter(lambda x: x.start_at.date() == day, appointments)
+            )
+
+        return appointments
 
 
 @app.get("/")
