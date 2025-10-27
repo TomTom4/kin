@@ -3,11 +3,8 @@ from uuid import uuid4
 
 import pytest
 
-from app.main import (
-    AppointmentController,
-    InvalidDateAndTimeError,
-    OverlappingAppointmentError,
-)
+from app.exceptions import InvalidDateAndTimeError, OverlappingAppointmentError
+from app.main import AppointmentController
 from app.models import User
 
 
@@ -163,6 +160,13 @@ class TestGetAppointments:
 
         appointments = controller.get_all_appointments(
             patient_id=patient_1.id, day=at.date()
+        )
+        assert len(appointments) == 1
+        assert appointments[0].therapist_id == therapist_2.id
+        assert appointments[0].patient_id == patient_1.id
+
+        appointments = controller.get_all_appointments(
+            therapist_id=therapist_2.id, day=at.date()
         )
         assert len(appointments) == 1
         assert appointments[0].therapist_id == therapist_2.id
