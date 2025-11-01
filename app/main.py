@@ -3,7 +3,6 @@ from uuid import UUID, uuid4
 
 from fastapi import FastAPI
 
-from app.exceptions import InvalidDateAndTimeError, OverlappingAppointmentError
 from app.models import Appointment, User
 
 app = FastAPI()
@@ -21,29 +20,18 @@ class AppointmentController:
         therapist: User,
         duration: timedelta = timedelta(minutes=30),
     ) -> Appointment:
-        if at < datetime.now():
-            raise InvalidDateAndTimeError
-        for an_appointment in self.appointments:
-            if (
-                (
-                    an_appointment.patient_id == patient.id
-                    or an_appointment.therapist_id == therapist.id
-                )
-                and an_appointment.start_at
-                <= at
-                <= an_appointment.start_at + an_appointment.duration
-            ):
-                raise OverlappingAppointmentError
-        appointment = Appointment(
+        new_appointment = Appointment(
             id=uuid4(),
             title=f"{patient.firstname} {patient.lastname}",
             start_at=at,
-            duration=duration,
             patient_id=patient.id,
             therapist_id=therapist.id,
         )
-        self.appointments.append(appointment)
-        return appointment
+        for an_appointment in self.appointments:
+            new_appointment.is_not_overlapping_with(an_appointment)
+
+        self.appointments.append(new_appointment)
+        return new_appointment
 
     def get_all_appointments(
         self,
