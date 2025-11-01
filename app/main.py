@@ -13,7 +13,7 @@ class AppointmentController:
     def __init__(self) -> None:
         self.appointments: list[Appointment] = []
 
-    def create_appointment(
+    async def create_appointment(
         self,
         at: datetime,
         patient: User,
@@ -33,7 +33,7 @@ class AppointmentController:
         self.appointments.append(new_appointment)
         return new_appointment
 
-    def get_all_appointments(
+    async def get_all_appointments(
         self,
         patient_id: UUID | None = None,
         therapist_id: UUID | None = None,
