@@ -3,9 +3,9 @@ from uuid import uuid4
 
 import pytest
 
+from app.domain import User
 from app.exceptions import InvalidDateAndTimeError, OverlappingAppointmentError
 from app.main import AppointmentController
-from app.models import User
 
 
 class TestCreatingAppointments:
