@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 
-from pydantic import UUID4, BaseModel, Field, field_validator
+from pydantic import UUID4, BaseModel, EmailStr, Field, field_validator
 
 from app.exceptions import InvalidDateAndTimeError, OverlappingAppointmentError
 
@@ -12,6 +12,8 @@ class KinModel(BaseModel):
 class User(KinModel):
     firstname: str
     lastname: str
+    email: EmailStr
+    password_hash: str
 
 
 class Appointment(KinModel):

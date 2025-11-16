@@ -5,8 +5,8 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
+from app.domain import Appointment
 from app.main import AppointmentController, app, get_appointment_service
-from app.models import Appointment
 
 
 @pytest.fixture
