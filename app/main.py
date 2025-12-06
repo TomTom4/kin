@@ -2,6 +2,7 @@ from typing import Annotated, AsyncGenerator
 from uuid import UUID
 
 from fastapi import Depends, FastAPI
+from fastapi.security import OAuth2PasswordBearer
 from pydantic import UUID4, BaseModel
 
 from app.domain import Appointment
@@ -9,6 +10,7 @@ from app.service import AppointmentController
 from app.service import UserService as UserController
 
 app = FastAPI()
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
 class AppointmentsResponse(BaseModel):
@@ -43,7 +45,9 @@ UserService = Annotated[UserController, Depends(get_user_service)]
 
 
 @app.get("/appointments")
-async def get_all_appointments(service: AppointmentService) -> AppointmentsResponse:
+async def get_all_appointments(
+    service: AppointmentService, token: Annotated[str, Depends(oauth2_scheme)]
+) -> AppointmentsResponse:
     return AppointmentsResponse(appointments=await service.get_all_appointments())
 
 

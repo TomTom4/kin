@@ -2,6 +2,7 @@ from datetime import date, datetime, timedelta
 from uuid import UUID, uuid4
 
 from app.domain import Appointment, User
+from app.exceptions import UserDontExistsError, WrongPasswordError
 
 
 class AppointmentController:
@@ -75,3 +76,17 @@ class UserService:
         )
         self.users.append(new_user)
         return new_user.id
+
+    async def authenticate_user(self, email: str, password: str) -> str:
+        authenticated_user: User | None = None
+        for a_user in self.users:
+            if a_user.email == email:
+                authenticated_user = a_user
+                break
+        if not authenticated_user:
+            raise UserDontExistsError
+        salted_password = authenticated_user.salt + password
+        hashed_given_password = await User.hash_password(salted_password)
+        if hashed_given_password == authenticated_user.password_hash:
+            return "trust_me_dude"
+        raise WrongPasswordError

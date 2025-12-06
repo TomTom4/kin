@@ -219,3 +219,10 @@ class TestUser:
         assert service.users[0].firstname == "John"
         assert service.users[0].lastname == "Doe"
         assert service.users[0].password_hash != "test".encode()
+
+    @pytest.mark.asyncio
+    async def test_authenticate_user(self) -> None:
+        service = UserService()
+        await service.create_user("John", "Doe", "johndoe@test.com", "test")
+        bearer_token: str = await service.authenticate_user("johndoe@test.com", "test")
+        assert bearer_token
