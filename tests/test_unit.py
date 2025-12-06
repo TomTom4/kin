@@ -24,7 +24,8 @@ def make_users():
                 firstname=fake.first_name(),
                 lastname=fake.last_name(),
                 email=fake.email(),
-                password_hash=fake.password(),
+                password_hash=fake.password().encode(),
+                salt=fake.password(),
             )
             for _ in range(user_count)
         ]
@@ -205,11 +206,12 @@ class TestGetAppointments:
 class TestUser:
 
     @pytest.mark.asyncio
-    async def test_signup_user(self) -> None:
+    async def test_create_user(self) -> None:
         service = UserService()
         assert service.users == []
 
-        await service.signup("John", "Doe", "johndoe@test.com", "test")
+        await service.create_user("John", "Doe", "johndoe@test.com", "test")
         assert len(service.users) == 1
         assert service.users[0].firstname == "John"
         assert service.users[0].lastname == "Doe"
+        assert service.users[0].password_hash != "test"

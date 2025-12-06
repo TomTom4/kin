@@ -58,15 +58,20 @@ class UserService:
     def __init__(self):
         self.users = []
 
-    async def signup(
+    async def create_user(
         self, firstname: str, lastname: str, email: str, password: str
     ) -> UUID:
+        salt = await User.generate_salt()
+        salted_password = salt + password
+        password_hash = await User.hash_password(salted_password)
+
         new_user = User(
             id=uuid4(),
             firstname=firstname,
             lastname=lastname,
             email=email,
-            password_hash=password,
+            password_hash=password_hash,
+            salt=salt,
         )
         self.users.append(new_user)
         return new_user.id
