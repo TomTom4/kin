@@ -15,3 +15,11 @@ class InvalidDateAndTimeError(AppointmentError):
 
 class OverlappingAppointmentError(AppointmentError):
     MSG = "Invalid appointment: the appointment demands provided overlap."
+
+
+class UserDontExistsError(BaseError):
+    MSG = "The given email adress is unknown to us"
+
+
+class WrongPasswordError(BaseError):
+    MSG = "The given password is wrong"
