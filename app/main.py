@@ -1,7 +1,8 @@
 from typing import Annotated, AsyncGenerator
 from uuid import UUID
 
-from fastapi import Depends, FastAPI
+from fastapi import Depends, FastAPI, Form
+from fastapi.security import OAuth2PasswordBearer
 from pydantic import UUID4, BaseModel
 
 from app.domain import Appointment
@@ -9,16 +10,22 @@ from app.service import AppointmentController
 from app.service import UserService as UserController
 
 app = FastAPI()
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 
 class AppointmentsResponse(BaseModel):
     appointments: list[Appointment]
 
 
+class LoginData(BaseModel):
+    username: str
+    password: str
+
+
 class SignupData(BaseModel):
+    email: str
     firstname: str
     lastname: str
-    email: str
     password: str
 
 
@@ -43,7 +50,9 @@ UserService = Annotated[UserController, Depends(get_user_service)]
 
 
 @app.get("/appointments")
-async def get_all_appointments(service: AppointmentService) -> AppointmentsResponse:
+async def get_all_appointments(
+    service: AppointmentService, token: Annotated[str, Depends(oauth2_scheme)]
+) -> AppointmentsResponse:
     return AppointmentsResponse(appointments=await service.get_all_appointments())
 
 
@@ -53,3 +62,14 @@ async def signup(data: SignupData, service: UserService) -> SignupResponse:
         data.firstname, data.lastname, data.email, data.password
     )
     return SignupResponse(user_id=user_id)
+
+
+@app.post("/login")
+async def login(
+    username: Annotated[str, Form()],
+    password: Annotated[str, Form()],
+    service: UserService,
+) -> dict[str, str]:
+    access_token: str = await service.authenticate_user(username, password)
+    payload: dict[str, str] = dict(access_token=access_token, token_type="bearer")
+    return payload

@@ -4,6 +4,7 @@ from uuid import uuid4
 
 import pytest
 from faker import Faker
+from joserfc import jwt
 
 from app.domain import User
 from app.exceptions import InvalidDateAndTimeError, OverlappingAppointmentError
@@ -219,3 +220,23 @@ class TestUser:
         assert service.users[0].firstname == "John"
         assert service.users[0].lastname == "Doe"
         assert service.users[0].password_hash != "test".encode()
+
+    @pytest.mark.asyncio
+    async def test_encode_token(self) -> None:
+        # https://datatracker.ietf.org/doc/html/rfc7519
+        service = UserService()
+        jwt_claims_set = {"id": 1, "name": "toto", "iss": "international space station"}
+        token = await service.encode_jwt_token(jwt_claims_set)
+        assert token
+        assert len(token.split(".")) == 3
+
+        decoded_token: jwt.Token = jwt.decode(token, service.secret_key)
+        assert decoded_token.claims == jwt_claims_set
+        assert decoded_token.header["alg"] == service.encoding_algorithm
+
+    @pytest.mark.asyncio
+    async def test_authenticate_user(self) -> None:
+        service = UserService()
+        await service.create_user("John", "Doe", "johndoe@test.com", "test")
+        bearer_token: str = await service.authenticate_user("johndoe@test.com", "test")
+        assert bearer_token

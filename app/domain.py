@@ -44,7 +44,7 @@ class Appointment(KinModel):
             raise InvalidDateAndTimeError
         return value
 
-    def is_not_overlapping_with(self, another_appointment: Appointment) -> None:
+    def is_not_overlapping_with(self, another_appointment: "Appointment") -> None:
         if (
             (
                 self.patient_id == another_appointment.patient_id
