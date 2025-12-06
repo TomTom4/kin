@@ -10,9 +10,14 @@ dependencies = [
     "ruff>=0.14.0",
 ]
 
+[tool.mypy]
+strict = true
+
+
 [dependency-groups]
 dev = [
     "faker>=38.2.0",
+    "mypy>=1.18.2",
     "pytest>=8.4.2",
     "pytest-asyncio>=1.2.0",
     "pytest-watcher>=0.4.3",

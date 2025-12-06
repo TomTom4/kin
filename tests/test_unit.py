@@ -16,15 +16,16 @@ type UserFactory = Callable[..., list[User]]
 
 
 @pytest.fixture()
-def make_users():
-    def _make_users(user_count: int):
+def make_users() -> Callable[..., list[User]]:
+    def _make_users(user_count: int) -> list[User]:
         return [
             User(
                 id=uuid4(),
                 firstname=fake.first_name(),
                 lastname=fake.last_name(),
                 email=fake.email(),
-                password_hash=fake.password(),
+                password_hash=fake.password().encode(),
+                salt=fake.password(),
             )
             for _ in range(user_count)
         ]
@@ -35,7 +36,7 @@ def make_users():
 class TestCreatingAppointments:
 
     @pytest.mark.asyncio
-    async def test_create_an_appointment(self, make_users: UserFactory):
+    async def test_create_an_appointment(self, make_users: UserFactory) -> None:
         therapist, patient = make_users(2)
         controller = AppointmentController()
         at = datetime.now() + timedelta(minutes=1)
@@ -46,7 +47,9 @@ class TestCreatingAppointments:
         assert appointments.therapist_id == therapist.id
 
     @pytest.mark.asyncio
-    async def test_create_appointment_in_the_past(self, make_users: UserFactory):
+    async def test_create_appointment_in_the_past(
+        self, make_users: UserFactory
+    ) -> None:
         controller = AppointmentController()
         therapist, patient = make_users(2)
         at = datetime.now() - timedelta(days=1)
@@ -54,7 +57,7 @@ class TestCreatingAppointments:
             await controller.create_appointment(at, patient, therapist)
 
     @pytest.mark.asyncio
-    async def test_appointments_cannot_overlap(self, make_users: UserFactory):
+    async def test_appointments_cannot_overlap(self, make_users: UserFactory) -> None:
         controller = AppointmentController()
         therapist, patient = make_users(2)
         at = datetime.now() + timedelta(minutes=1)
@@ -66,7 +69,7 @@ class TestCreatingAppointments:
 class TestGetAppointments:
 
     @pytest.mark.asyncio
-    async def test_appointments_are_saved(self, make_users: UserFactory):
+    async def test_appointments_are_saved(self, make_users: UserFactory) -> None:
         controller = AppointmentController()
         therapist, patient = make_users(2)
         temp = []
@@ -79,14 +82,14 @@ class TestGetAppointments:
         assert temp == controller.appointments
 
     @pytest.mark.asyncio
-    async def test_get_all_appointments_when_there_is_none(self):
+    async def test_get_all_appointments_when_there_is_none(self) -> None:
         controller = AppointmentController()
         assert await controller.get_all_appointments() == controller.appointments
 
     @pytest.mark.asyncio
     async def test_get_all_appointments_when_there_is_one(
         self, make_users: UserFactory
-    ):
+    ) -> None:
         controller = AppointmentController()
         therapist, patient = make_users(2)
         at = datetime.now() + timedelta(minutes=1)
@@ -97,7 +100,7 @@ class TestGetAppointments:
     @pytest.mark.asyncio
     async def test_get_all_appointments_when_there_is_many(
         self, make_users: UserFactory
-    ):
+    ) -> None:
         controller = AppointmentController()
         therapist, patient = make_users(2)
         at = datetime.now() + timedelta(days=1)
@@ -114,7 +117,7 @@ class TestGetAppointments:
     @pytest.mark.asyncio
     async def test_get_appointments_filtered_by_patient_id(
         self, make_users: UserFactory
-    ):
+    ) -> None:
         controller = AppointmentController()
         therapist_1, therapist_2, patient_1, patient_2 = make_users(4)
         at = datetime.now() + timedelta(days=1)
@@ -134,7 +137,7 @@ class TestGetAppointments:
     @pytest.mark.asyncio
     async def test_get_appointments_filtered_by_therapist_id(
         self, make_users: UserFactory
-    ):
+    ) -> None:
         controller = AppointmentController()
         therapist_1, therapist_2, patient_1, patient_2 = make_users(4)
         at = datetime.now() + timedelta(days=1)
@@ -154,7 +157,9 @@ class TestGetAppointments:
             assert an_appointment.therapist_id == therapist_1.id
 
     @pytest.mark.asyncio
-    async def test_get_appointments_filtered_by_date(self, make_users: UserFactory):
+    async def test_get_appointments_filtered_by_date(
+        self, make_users: UserFactory
+    ) -> None:
         controller = AppointmentController()
         therapist_1, therapist_2, patient_1, patient_2 = make_users(4)
         at = datetime.now() + timedelta(days=1)
@@ -172,7 +177,7 @@ class TestGetAppointments:
     @pytest.mark.asyncio
     async def test_get_all_appointments_filtered_by_multiple_filters(
         self, make_users: UserFactory
-    ):
+    ) -> None:
         controller = AppointmentController()
         therapist_1, therapist_2, patient_1, patient_2 = make_users(4)
         at = datetime.now() + timedelta(days=1)
@@ -205,11 +210,12 @@ class TestGetAppointments:
 class TestUser:
 
     @pytest.mark.asyncio
-    async def test_signup_user(self) -> None:
+    async def test_create_user(self) -> None:
         service = UserService()
         assert service.users == []
 
-        await service.signup("John", "Doe", "johndoe@test.com", "test")
+        await service.create_user("John", "Doe", "johndoe@test.com", "test")
         assert len(service.users) == 1
         assert service.users[0].firstname == "John"
         assert service.users[0].lastname == "Doe"
+        assert service.users[0].password_hash != "test".encode()

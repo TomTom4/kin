@@ -252,6 +252,7 @@ dependencies = [
 [package.dev-dependencies]
 dev = [
     { name = "faker" },
+    { name = "mypy" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
     { name = "pytest-watcher" },
@@ -267,6 +268,7 @@ requires-dist = [
 [package.metadata.requires-dev]
 dev = [
     { name = "faker", specifier = ">=38.2.0" },
+    { name = "mypy", specifier = ">=1.18.2" },
     { name = "pytest", specifier = ">=8.4.2" },
     { name = "pytest-asyncio", specifier = ">=1.2.0" },
     { name = "pytest-watcher", specifier = ">=0.4.3" },

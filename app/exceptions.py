@@ -1,7 +1,7 @@
 class BaseError(Exception):
     MSG = "This is application base exception"
 
-    def __init__(self, message=None):
+    def __init__(self, message: str | None = None) -> None:
         self.message = message or self.MSG
 
 

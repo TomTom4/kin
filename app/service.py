@@ -34,7 +34,7 @@ class AppointmentController:
         patient_id: UUID | None = None,
         therapist_id: UUID | None = None,
         day: date | None = None,
-    ):
+    ) -> list[Appointment]:
         appointments = self.appointments
         if therapist_id:
             appointments = list(
@@ -55,18 +55,23 @@ class AppointmentController:
 
 class UserService:
 
-    def __init__(self):
-        self.users = []
+    def __init__(self) -> None:
+        self.users: list[User] = []
 
-    async def signup(
+    async def create_user(
         self, firstname: str, lastname: str, email: str, password: str
     ) -> UUID:
+        salt = await User.generate_salt()
+        salted_password = salt + password
+        password_hash = await User.hash_password(salted_password)
+
         new_user = User(
             id=uuid4(),
             firstname=firstname,
             lastname=lastname,
             email=email,
-            password_hash=password,
+            password_hash=password_hash,
+            salt=salt,
         )
         self.users.append(new_user)
         return new_user.id
