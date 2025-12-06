@@ -107,7 +107,6 @@ class TestUser:
             firstname="test", lastname="test", email="test@test.com", password="test"
         )
         response = with_controlled_service_client.post("/signup", json=data)
-        print(response.json())
         assert response.json()["user_id"]
         assert len(controlled_user_service.users) == 1
         saved_user = controlled_user_service.users[0]
@@ -115,3 +114,23 @@ class TestUser:
         assert saved_user.lastname == data["lastname"]
         assert saved_user.email == data["email"]
         assert saved_user.password_hash != data["password"].encode()
+
+    @pytest.mark.asyncio
+    async def test_login(
+        self,
+        with_controlled_service_client: TestClient,
+        controlled_user_service: UserController,
+    ) -> None:
+
+        data: dict[str, str] = dict(
+            firstname="test", lastname="test", email="test@test.com", password="test"
+        )
+        await controlled_user_service.create_user(
+            data["firstname"], data["lastname"], data["email"], data["password"]
+        )
+        response = with_controlled_service_client.post(
+            "/login", json=dict(username="test@test.com", password="test")
+        )
+        assert response.status_code == 200
+        assert isinstance(response.text, str)
+        assert len(response.text.split(".")) == 3
