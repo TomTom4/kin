@@ -1,37 +1,32 @@
 from datetime import datetime, timedelta
-from typing import Callable
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
-from faker import Faker
-from joserfc import jwt
 
-from app.domain import User
+from app.domain.appointments import Appointment
+from app.domain.ports import AppointmentRepository
 from app.exceptions import InvalidDateAndTimeError, OverlappingAppointmentError
-from app.service import AppointmentController, UserService
+from app.service import AppointmentController
 
-fake = Faker()
-Faker.seed(23)
-
-type UserFactory = Callable[..., list[User]]
+from .conftest import UserFactory
 
 
-@pytest.fixture()
-def make_users() -> Callable[..., list[User]]:
-    def _make_users(user_count: int) -> list[User]:
-        return [
-            User(
-                id=uuid4(),
-                firstname=fake.first_name(),
-                lastname=fake.last_name(),
-                email=fake.email(),
-                password_hash=fake.password().encode(),
-                salt=fake.password(),
-            )
-            for _ in range(user_count)
-        ]
+class InMemoryAppointmentRepository(AppointmentRepository):
 
-    return _make_users
+    def __init__(self) -> None:
+        self._appointments: dict[UUID, Appointment] = {}
+
+    async def get(self, id: UUID) -> Appointment:
+        return self._appointments[id]
+
+    async def save(self, appointment: Appointment) -> UUID:
+        id = uuid4()
+        appointment.id = id
+        self._appointments[id] = appointment
+        return id
+
+    async def list(self) -> list[Appointment]:
+        return list(self._appointments.values())
 
 
 class TestCreatingAppointments:
@@ -206,37 +201,3 @@ class TestGetAppointments:
         assert len(appointments) == 1
         assert appointments[0].therapist_id == therapist_2.id
         assert appointments[0].patient_id == patient_1.id
-
-
-class TestUser:
-
-    @pytest.mark.asyncio
-    async def test_create_user(self) -> None:
-        service = UserService()
-        assert service.users == []
-
-        await service.create_user("John", "Doe", "johndoe@test.com", "test")
-        assert len(service.users) == 1
-        assert service.users[0].firstname == "John"
-        assert service.users[0].lastname == "Doe"
-        assert service.users[0].password_hash != "test".encode()
-
-    @pytest.mark.asyncio
-    async def test_encode_token(self) -> None:
-        # https://datatracker.ietf.org/doc/html/rfc7519
-        service = UserService()
-        jwt_claims_set = {"id": 1, "name": "toto", "iss": "international space station"}
-        token = await service.encode_jwt_token(jwt_claims_set)
-        assert token
-        assert len(token.split(".")) == 3
-
-        decoded_token: jwt.Token = jwt.decode(token, service.secret_key)
-        assert decoded_token.claims == jwt_claims_set
-        assert decoded_token.header["alg"] == service.encoding_algorithm
-
-    @pytest.mark.asyncio
-    async def test_authenticate_user(self) -> None:
-        service = UserService()
-        await service.create_user("John", "Doe", "johndoe@test.com", "test")
-        bearer_token: str = await service.authenticate_user("johndoe@test.com", "test")
-        assert bearer_token
